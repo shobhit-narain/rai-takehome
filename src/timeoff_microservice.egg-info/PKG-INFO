@@ -1,0 +1,32 @@
+Metadata-Version: 2.4
+Name: timeoff-microservice
+Version: 0.1.0
+Summary: Python backend service for leave workflows, balance sync, mock HCM integration, and scheduled reconciliation.
+Author: ReadyOn Engineering
+Project-URL: Repository, https://example.com/timeoff-microservice
+Project-URL: Documentation, https://example.com/timeoff-microservice/docs
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0,>=0.111
+Requires-Dist: uvicorn[standard]<1.0,>=0.30
+Requires-Dist: sqlalchemy<3.0,>=2.0
+Requires-Dist: pydantic<3.0,>=2.7
+Requires-Dist: pydantic-settings<3.0,>=2.3
+Requires-Dist: httpx<1.0,>=0.27
+Requires-Dist: apscheduler<4.0,>=3.10
+Requires-Dist: python-multipart<1.0,>=0.0.9
+Provides-Extra: dev
+Requires-Dist: pytest<9.0,>=8.2; extra == "dev"
+Requires-Dist: pytest-cov<6.0,>=5.0; extra == "dev"
+Requires-Dist: pytest-mock<4.0,>=3.14; extra == "dev"
+Requires-Dist: mypy<2.0,>=1.10; extra == "dev"
+Requires-Dist: ruff<1.0,>=0.5; extra == "dev"
+Requires-Dist: types-requests>=2.32.0.20240622; extra == "dev"
+Requires-Dist: types-python-dateutil>=2.9.0.20240316; extra == "dev"
+Requires-Dist: pandocfilters<2.0,>=1.5; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest<9.0,>=8.2; extra == "test"
+Requires-Dist: pytest-cov<6.0,>=5.0; extra == "test"
+Requires-Dist: pytest-mock<4.0,>=3.14; extra == "test"
+Provides-Extra: docs
+Requires-Dist: pandocfilters<2.0,>=1.5; extra == "docs"
