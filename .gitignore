@@ -25,3 +25,5 @@ dist/
 .env
 .flaskenv
 coverage.xml
+
+local.db
