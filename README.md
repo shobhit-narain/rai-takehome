@@ -12,6 +12,13 @@ A Python microservice for employee leave and time-off workflows. The service pro
 - Deterministic seed-data generation and local database initialization scripts.
 - Unit, integration, API, and end-to-end test coverage.
 
+### Other Documentation
+
+- [Technical Requirements Document](docs/TRD.md)
+- [Detailed API Specification](docs/API_SPEC.md)
+- [Comprehensive Test Plan](tests/README.md)
+
+
 ## Repository layout
 
 ```text
