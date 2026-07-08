@@ -8,7 +8,7 @@ from datetime import date
 import pytest
 
 from src.auth.current_user import LoggedInUser
-from src.domain.enums import LeaveAction, LeaveType, UserRole, LeaveStatus
+from src.domain.enums import LeaveAction, LeaveStatus, LeaveType, UserRole
 from src.domain.errors import PolicyViolationError
 from src.domain.leave_policy import LeavePolicyService
 from src.domain.models import LeaveCreateCommand, LeaveUpdateCommand

@@ -11,7 +11,6 @@ from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-
 DEFAULT_OUTPUT_DIR = Path("seed_data")
 DEFAULT_SEED = 20260705
 DEFAULT_EMPLOYEE_COUNT = 5000

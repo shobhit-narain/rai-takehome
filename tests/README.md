@@ -607,8 +607,6 @@ Scenario:
 
 The CI pipeline runs:
 
-- lint
-- typecheck
 - unit tests
 - integration tests
 - API tests

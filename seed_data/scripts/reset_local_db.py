@@ -24,9 +24,9 @@ def main() -> int:
         sys.path.insert(0, str(project_root))
 
     try:
+        from src.app.config import AppSettings
         from src.infra.db.base import Base
         from src.infra.db.session import build_engine
-        from src.app.config import AppSettings
     except ImportError as exc:
         print(f"Import error: {exc}")
         print("Make sure dependencies are installed and the project structure is in place.")
