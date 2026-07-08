@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import csv
-import json
 from datetime import date, datetime
 from pathlib import Path
 
 from sqlalchemy.orm import Session, sessionmaker
 
+from src.app.config import AppSettings
 from src.infra.db.base import Base
 from src.infra.db.models import (
     AuditEventRecord,
@@ -17,7 +17,6 @@ from src.infra.db.models import (
     UserRecord,
 )
 from src.infra.db.session import build_engine
-from src.app.config import AppSettings
 
 
 class SeedService:

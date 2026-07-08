@@ -1,0 +1,43 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Pipenv / Poetry / common packaging tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+build/
+dist/
+*.egg-info/
+
+# Environment variables and secrets
+.env
+.flaskenv
+
+# Seeded data files and database
+local.db
+seed_data/*.csv
+seed_data/*.json
+
+# Coverage artifacts
+.coverage
+coverage.xml
+
+# Other files
+CLAUDE.md
+.aider*
+docs/BLUEPRINT.md
+docs/IMPLEMENTATION_PLAN.md
+docs/SETUP.md
+next-steps
