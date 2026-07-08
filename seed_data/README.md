@@ -19,7 +19,7 @@ Generated files:
 Run:
 
 ```bash
-python scripts/generate_seed_data.py
+make reset-and-seed
 ```
 
 This creates a default dataset with:

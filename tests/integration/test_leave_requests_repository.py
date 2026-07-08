@@ -1,3 +1,6 @@
+# Tests for LeaveRequestsRepository integration with database.
+# Validates CRUD operations, manager scope filtering, version conflict detection, and location filtering.
+
 from __future__ import annotations
 
 import pytest
@@ -9,6 +12,7 @@ from src.repositories.leave_requests_repository import (
 )
 
 
+# Create operation persists leave request and can be retrieved by ID
 def test_leave_requests_repository_creates_record(db_session) -> None:
     user = build_user_record(id="emp-1")
     db_session.add(user)
@@ -20,6 +24,7 @@ def test_leave_requests_repository_creates_record(db_session) -> None:
     assert repo.get_by_id("leave-1") is created
 
 
+# list_for_manager_scope returns only requests for employees in manager's reporting tree
 def test_leave_requests_repository_filters_by_manager_scope(db_session) -> None:
     manager = build_user_record(id="mgr-1", role="manager")
     emp1 = build_user_record(id="emp-1", manager_id="mgr-1")
@@ -37,6 +42,7 @@ def test_leave_requests_repository_filters_by_manager_scope(db_session) -> None:
     assert {r.id for r in results} == {"leave-1", "leave-2"}
 
 
+# update_with_version_check raises ConflictVersionError when version mismatches
 def test_leave_requests_repository_detects_version_conflict(db_session) -> None:
     user = build_user_record(id="emp-1")
     db_session.add(user)
@@ -49,6 +55,7 @@ def test_leave_requests_repository_detects_version_conflict(db_session) -> None:
         repo.update_with_version_check(record, expected_version=2)
 
 
+# list_by_requestor with location_id filter returns only matching location records
 def test_leave_requests_repository_filters_by_location_id(db_session) -> None:
     user = build_user_record(id="emp-1")
     db_session.add(user)
@@ -62,6 +69,7 @@ def test_leave_requests_repository_filters_by_location_id(db_session) -> None:
     assert {r.id for r in results} == {"leave-1"}
 
 
+# update_with_version_check raises ValueError for non-existent record
 def test_leave_requests_repository_update_with_version_check_missing_record(db_session) -> None:
     repo = LeaveRequestsRepository(db_session)
     missing = build_leave_request_record(id="leave-missing", requestor_id="emp-1")

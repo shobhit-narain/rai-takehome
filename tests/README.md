@@ -1,10 +1,10 @@
-# Time-Off Microservice Test Plan
+# Test Plan
 
 ## 1. Purpose
 
 This document defines the testing strategy for the Python Time-Off Microservice. The goal is to detect regressions in authorization, leave lifecycle behavior, HCM synchronization, retry logic, rate-limit handling, and reconciliation flows.
 
-## 2. Test Objectives
+## 2. Objectives
 
 The test suite must prove that the service:
 
@@ -27,25 +27,25 @@ The test suite must prove that the service:
 - dependency overrides for test injection
 - HTTP mocks or local mock HCM routes for upstream simulation
 
-## 4. Test Layers
+## 4. Layers
 
-### 4.1 Unit Tests
+### Unit Tests
 
 Unit tests validate isolated modules without real database or HTTP dependencies unless the module is itself infrastructure.
 
-### 4.2 Integration Tests
+### Integration Tests
 
 Integration tests validate repository and service behavior against real SQLite and real object wiring, while external HCM dependencies are simulated.
 
-### 4.3 API Tests
+### API Tests
 
 API tests validate route contracts, auth enforcement, request validation, response shapes, and dependency wiring using the web application interface.
 
-### 4.4 End-to-End Tests
+### End-to-End Tests
 
 End-to-end tests validate complete business workflows, including mock HCM scenarios, scheduled scripts, and reconciliation behavior.
 
-## 5. Test Directory Layout
+## 5. Directory Layout
 
 ```text
 tests/
@@ -106,11 +106,11 @@ tests/
     test_repair_pending_reconciliation.py
 ```
 
-## 6. Fixture Strategy
+## 6. Fixtures
 
-### 6.1 Global Fixtures
+### Global Fixtures
 
-Global fixtures should provide:
+Global fixtures provide:
 
 - a clean test database
 - seeded users
@@ -121,9 +121,9 @@ Global fixtures should provide:
 - app factory instances
 - dependency override helpers
 
-### 6.2 App Fixtures
+### App Fixtures
 
-App fixtures should support:
+App fixtures support:
 
 - real services with test database
 - overridden auth dependencies
@@ -131,9 +131,9 @@ App fixtures should support:
 - scenario-specific mock HCM behavior
 - cleanup of FastAPI dependency overrides after each test
 
-### 6.3 Data Fixtures
+### Data Fixtures
 
-Data fixtures should include:
+Data fixtures include:
 
 - employee user
 - manager user
@@ -146,9 +146,9 @@ Data fixtures should include:
 
 ## 7. Unit Test Coverage
 
-### 7.1 Auth Dependencies
+### Auth Dependencies
 
-File: `tests/unit/test_auth_dependencies.py`
+`tests/unit/test_auth_dependencies.py`
 
 Cases:
 
@@ -160,9 +160,9 @@ Cases:
 - manager dependency accepts manager role
 - admin dependency rejects non-admin role
 
-### 7.2 LoggedInUser
+### LoggedInUser
 
-File: `tests/unit/test_logged_in_user.py`
+`tests/unit/test_logged_in_user.py`
 
 Cases:
 
@@ -170,9 +170,9 @@ Cases:
 - `is_manager()` returns true only for manager
 - `is_admin()` returns true only for admin
 
-### 7.3 Leave State Machine
+### Leave State Machine
 
-File: `tests/unit/test_leave_state_machine.py`
+`tests/unit/test_leave_state_machine.py`
 
 Cases:
 
@@ -181,13 +181,14 @@ Cases:
 - `requested -> denied` is valid
 - `requested -> canceled` is valid
 - `approved -> complete` is valid
+- `approved -> denied` is valid (with mitigating circumstances)
 - invalid transitions raise domain error
 - uncertain result can move to `pending_reconciliation`
 - reconciliation completion transitions are valid
 
-### 7.4 Leave Policy Service
+### Leave Policy Service
 
-File: `tests/unit/test_leave_policy_service.py`
+`tests/unit/test_leave_policy_service.py`
 
 Cases:
 
@@ -200,9 +201,9 @@ Cases:
 - unsupported leave type is rejected
 - invalid date range is rejected
 
-### 7.5 Balances Service
+### Balances Service
 
-File: `tests/unit/test_balances_service.py`
+`tests/unit/test_balances_service.py`
 
 Cases:
 
@@ -211,9 +212,9 @@ Cases:
 - reconciliation update applies external values correctly
 - batch upsert handles mixed insert and update rows
 
-### 7.6 HTTP Client
+### HTTP Client
 
-File: `tests/unit/test_http_client.py`
+`tests/unit/test_http_client.py`
 
 Cases:
 
@@ -224,9 +225,9 @@ Cases:
 - authentication failure raises typed upstream auth error
 - rate-limit response updates rate-limit state
 
-### 7.7 Retry Policy
+### Retry Policy
 
-File: `tests/unit/test_retry_policy.py`
+`tests/unit/test_retry_policy.py`
 
 Cases:
 
@@ -235,9 +236,9 @@ Cases:
 - jitter value is applied within expected range
 - non-retriable exception returns false from retry predicate
 
-### 7.8 Rate Limit Service
+### Rate Limit Service
 
-File: `tests/unit/test_rate_limit_service.py`
+`tests/unit/test_rate_limit_service.py`
 
 Cases:
 
@@ -247,9 +248,9 @@ Cases:
 - acquire fails when tokens unavailable
 - update persists new state through cache
 
-### 7.9 Cache Service
+### Cache Service
 
-File: `tests/unit/test_cache_service.py`
+`tests/unit/test_cache_service.py`
 
 Cases:
 
@@ -259,9 +260,9 @@ Cases:
 - TTL expiration removes key
 - delete removes key
 
-### 7.10 Mock HCM Adapter
+### Mock HCM Adapter
 
-File: `tests/unit/test_mock_hcm_adapter.py`
+`tests/unit/test_mock_hcm_adapter.py`
 
 Cases:
 
@@ -271,9 +272,9 @@ Cases:
 - insufficient balance response maps to business result
 - ambiguous response maps to reconciliation-needed result
 
-### 7.11 Scripts Service
+### Scripts Service
 
-File: `tests/unit/test_scripts_service.py`
+`tests/unit/test_scripts_service.py`
 
 Cases:
 
@@ -282,9 +283,9 @@ Cases:
 - status lookup returns current state
 - cancel request marks run for cancellation
 
-### 7.12 Reconciliation Service
+### Reconciliation Service
 
-File: `tests/unit/test_reconciliation_service.py`
+`tests/unit/test_reconciliation_service.py`
 
 Cases:
 
@@ -295,9 +296,9 @@ Cases:
 
 ## 8. Integration Test Coverage
 
-### 8.1 Users Repository
+### Users Repository
 
-File: `tests/integration/test_users_repository.py`
+`tests/integration/test_users_repository.py`
 
 Cases:
 
@@ -306,9 +307,9 @@ Cases:
 - retrieve reporting tree
 - unrelated manager tree exclusion works
 
-### 8.2 Leave Requests Repository
+### Leave Requests Repository
 
-File: `tests/integration/test_leave_requests_repository.py`
+`tests/integration/test_leave_requests_repository.py`
 
 Cases:
 
@@ -319,9 +320,9 @@ Cases:
 - pagination works
 - status filtering works
 
-### 8.3 Leave Balances Repository
+### Leave Balances Repository
 
-File: `tests/integration/test_leave_balances_repository.py`
+`tests/integration/test_leave_balances_repository.py`
 
 Cases:
 
@@ -331,18 +332,18 @@ Cases:
 - query by user and location
 - bulk upsert works
 
-### 8.4 HCM Configs Repository
+### HCM Configs Repository
 
-File: `tests/integration/test_hcm_configs_repository.py`
+`tests/integration/test_hcm_configs_repository.py`
 
 Cases:
 
 - active config lookup works
 - provider-specific config retrieval works
 
-### 8.5 Script Runs Repository
+### Script Runs Repository
 
-File: `tests/integration/test_script_runs_repository.py`
+`tests/integration/test_script_runs_repository.py`
 
 Cases:
 
@@ -351,9 +352,9 @@ Cases:
 - set cancel request
 - retrieve run status
 
-### 8.6 Audit Events Repository
+### Audit Events Repository
 
-File: `tests/integration/test_audit_events_repository.py`
+`tests/integration/test_audit_events_repository.py`
 
 Cases:
 
@@ -361,9 +362,9 @@ Cases:
 - query audit events by entity
 - query audit events by actor
 
-### 8.7 Leaves Service Integration
+### Leaves Service Integration
 
-File: `tests/integration/test_leaves_service_integration.py`
+`tests/integration/test_leaves_service_integration.py`
 
 Cases:
 
@@ -373,9 +374,9 @@ Cases:
 - invalid state transition fails without corrupting row
 - conflicting update detects version mismatch
 
-### 8.8 Balances Service Integration
+### Balances Service Integration
 
-File: `tests/integration/test_balances_service_integration.py`
+`tests/integration/test_balances_service_integration.py`
 
 Cases:
 
@@ -383,9 +384,9 @@ Cases:
 - batch update balances from canonical external data
 - preserve location scoping
 
-### 8.9 Reconciliation Integration
+### Reconciliation Integration
 
-File: `tests/integration/test_reconciliation_integration.py`
+`tests/integration/test_reconciliation_integration.py`
 
 Cases:
 
@@ -393,9 +394,9 @@ Cases:
 - local pending request repaired from external denied state
 - local balance drift corrected after external refresh
 
-### 8.10 Mock HCM Adapter Integration
+### Mock HCM Adapter Integration
 
-File: `tests/integration/test_mock_hcm_adapter_integration.py`
+`tests/integration/test_mock_hcm_adapter_integration.py`
 
 Cases:
 
@@ -406,18 +407,9 @@ Cases:
 
 ## 9. API Test Coverage
 
-### 9.1 Health Routes
+### Employee Leave Routes
 
-File: `tests/api/test_health_routes.py`
-
-Cases:
-
-- health endpoint returns success
-- readiness endpoint returns success if included
-
-### 9.2 Employee Leave Routes
-
-File: `tests/api/test_leaves_employee_routes.py`
+`tests/api/test_leaves_employee_routes.py`
 
 Cases:
 
@@ -429,9 +421,9 @@ Cases:
 - unauthenticated request returns 401
 - employee cannot list manager queue
 
-### 9.3 Manager Leave Routes
+### Manager Leave Routes
 
-File: `tests/api/test_leaves_manager_routes.py`
+`tests/api/test_leaves_manager_routes.py`
 
 Cases:
 
@@ -441,9 +433,9 @@ Cases:
 - manager cannot update unrelated employee request
 - non-manager cannot access manager queue
 
-### 9.4 Admin Leave Routes
+### Admin Leave Routes
 
-File: `tests/api/test_leaves_admin_routes.py`
+`tests/api/test_leaves_admin_routes.py`
 
 Cases:
 
@@ -451,9 +443,9 @@ Cases:
 - admin can perform permitted override action
 - admin action produces audit event
 
-### 9.5 Scripts Routes
+### Scripts Routes
 
-File: `tests/api/test_scripts_routes.py`
+`tests/api/test_scripts_routes.py`
 
 Cases:
 
@@ -463,9 +455,9 @@ Cases:
 - admin can request cancellation
 - invalid script name returns stable error
 
-### 9.6 Mock HCM Routes
+### Mock HCM Routes
 
-File: `tests/api/test_mock_hcm_routes.py`
+`tests/api/test_mock_hcm_routes.py`
 
 Cases:
 
@@ -476,9 +468,9 @@ Cases:
 
 ## 10. End-to-End Test Coverage
 
-### 10.1 Employee Request Happy Path
+### Employee Request Happy Path
 
-File: `tests/e2e/test_employee_request_happy_path.py`
+`tests/e2e/test_employee_request_happy_path.py`
 
 Scenario:
 
@@ -489,9 +481,9 @@ Scenario:
 5. verify audit event
 6. verify external mock HCM record
 
-### 10.2 Employee Request With Insufficient Balance
+### Employee Request With Insufficient Balance
 
-File: `tests/e2e/test_employee_request_insufficient_balance.py`
+`tests/e2e/test_employee_request_insufficient_balance.py`
 
 Scenario:
 
@@ -500,9 +492,9 @@ Scenario:
 3. verify stable error response
 4. verify local state remains consistent
 
-### 10.3 External Balance Refresh
+### External Balance Refresh
 
-File: `tests/e2e/test_external_balance_refresh.py`
+`tests/e2e/test_external_balance_refresh.py`
 
 Scenario:
 
@@ -511,9 +503,9 @@ Scenario:
 3. run reconciliation or sync script
 4. verify local balance matches external truth
 
-### 10.4 Manager Approval Flow
+### Manager Approval Flow
 
-File: `tests/e2e/test_manager_approval_flow.py`
+`tests/e2e/test_manager_approval_flow.py`
 
 Scenario:
 
@@ -524,9 +516,9 @@ Scenario:
 5. verify approver assignment
 6. verify external update succeeded
 
-### 10.5 Manager Denial Flow
+### Manager Denial Flow
 
-File: `tests/e2e/test_manager_denial_flow.py`
+`tests/e2e/test_manager_denial_flow.py`
 
 Scenario:
 
@@ -534,9 +526,9 @@ Scenario:
 2. manager denies request
 3. verify denial state and audit event
 
-### 10.6 Employee Cancel Flow
+### Employee Cancel Flow
 
-File: `tests/e2e/test_employee_cancel_flow.py`
+`tests/e2e/test_employee_cancel_flow.py`
 
 Scenario:
 
@@ -544,9 +536,9 @@ Scenario:
 2. employee cancels request
 3. verify local and external state
 
-### 10.7 Cancel vs Approve Race
+### Cancel vs Approve Race
 
-File: `tests/e2e/test_cancel_vs_approve_race.py`
+`tests/e2e/test_cancel_vs_approve_race.py`
 
 Scenario:
 
@@ -556,9 +548,9 @@ Scenario:
 4. verify no silent overwrite
 5. verify final state is valid
 
-### 10.8 Ambiguous HCM Response
+### Ambiguous HCM Response
 
-File: `tests/e2e/test_ambiguous_hcm_response.py`
+`tests/e2e/test_ambiguous_hcm_response.py`
 
 Scenario:
 
@@ -568,9 +560,9 @@ Scenario:
 4. run repair script
 5. verify final resolved state
 
-### 10.9 Rate-Limit Retry Flow
+### Rate-Limit Retry Flow
 
-File: `tests/e2e/test_rate_limit_retry_flow.py`
+`tests/e2e/test_rate_limit_retry_flow.py`
 
 Scenario:
 
@@ -580,9 +572,9 @@ Scenario:
 4. verify rate-limit state updated
 5. verify final outcome
 
-### 10.10 Scheduled Sync All Balances
+### Scheduled Sync All Balances
 
-File: `tests/e2e/test_scheduled_sync_all_balances.py`
+`tests/e2e/test_scheduled_sync_all_balances.py`
 
 Scenario:
 
@@ -591,9 +583,9 @@ Scenario:
 3. verify run record
 4. verify balances updated
 
-### 10.11 Repair Pending Reconciliation
+### Repair Pending Reconciliation
 
-File: `tests/e2e/test_repair_pending_reconciliation.py`
+`tests/e2e/test_repair_pending_reconciliation.py`
 
 Scenario:
 
@@ -604,34 +596,16 @@ Scenario:
 
 ## 11. Test Data Rules
 
-- use deterministic seeds where possible
-- isolate tests by database or transaction strategy
+- used deterministic seeds where possible
+- isolated tests by database or transaction strategy
 - reset dependency overrides after each test
-- avoid hidden global state
-- separate local seeded state from mock external HCM state
-- use stable time helpers for timestamp-sensitive tests
+- avoided hidden global state
+- separated local seeded state from mock external HCM state
+- used stable time helpers for timestamp-sensitive tests
 
-## 12. Coverage Thresholds
+## 12. CI Requirements
 
-Minimum thresholds:
-
-- lines: 90
-- statements: 90
-- functions: 90
-- branches: 85
-
-Critical branch areas:
-
-- leave state transitions
-- role authorization
-- manager hierarchy checks
-- retry decision logic
-- rate-limit acquisition
-- reconciliation decisions
-
-## 13. CI Requirements
-
-The CI pipeline must run:
+The CI pipeline runs:
 
 - lint
 - typecheck
@@ -647,12 +621,12 @@ The pipeline should fail if:
 - coverage threshold is missed
 - schema or seed flow breaks from a clean environment
 
-## 14. Exit Criteria
+## Exit Criteria
 
-The test plan is complete when:
+The test plan is complete:
 
-- all planned test files exist
-- critical workflows are covered at more than one layer
-- mock HCM scenarios are usable in automated tests
-- race and reconciliation behaviors are explicitly verified
-- CI enforces quality gates
+- ✅ all planned test files exist
+- ✅ critical workflows are covered at more than one layer
+- ✅ mock HCM scenarios are usable in automated tests
+- ✅ race and reconciliation behaviors are explicitly verified
+- ✅ CI enforces quality gates

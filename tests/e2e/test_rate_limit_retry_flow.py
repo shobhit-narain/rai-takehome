@@ -1,3 +1,6 @@
+# Tests for end-to-end rate-limit retry flow.
+# Validates that 429 responses trigger retries, rate-limit state is updated, and final outcome succeeds.
+
 from __future__ import annotations
 
 import httpx
@@ -7,15 +10,18 @@ from src.infra.http.client import HttpClient
 from src.infra.http.retry import RetryPolicy
 
 
+# 429 rate-limit response triggers retry, then succeeds; rate-limit state is tracked
 def test_rate_limit_retry_flow() -> None:
     calls = {"count": 0}
 
     def handler(request: httpx.Request) -> httpx.Response:
         calls["count"] += 1
         if calls["count"] < 2:
+            # First call returns 429 (rate limited) with empty remaining tokens
             return httpx.Response(
                 429, headers={"X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
             )
+        # Second call succeeds
         return httpx.Response(200, json={"ok": True})
 
     client = HttpClient(

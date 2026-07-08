@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.auth.current_user import LoggedInUser
@@ -48,6 +48,6 @@ class AuditService:
             action=action,
             actor_user_id=actor_user_id,
             payload_json=json.dumps(payload),
-            created_ts=datetime.now(timezone.utc),
+            created_ts=datetime.now(UTC),
         )
         return self.audit_events_repository.create_event(event)

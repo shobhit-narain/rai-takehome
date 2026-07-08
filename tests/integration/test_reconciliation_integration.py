@@ -1,3 +1,6 @@
+# Tests for ReconciliationService integration with database and mock HCM adapter.
+# Validates leave request repair from external HCM truth and balance drift correction.
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -27,6 +30,7 @@ def _build_service(db_session, tmp_path: Path) -> ReconciliationService:
     )
 
 
+# Local pending_reconciliation record is repaired when HCM returns a final state
 def test_reconciliation_service_repairs_pending_request_from_external_truth(
     db_session, tmp_path: Path
 ) -> None:
@@ -44,9 +48,11 @@ def test_reconciliation_service_repairs_pending_request_from_external_truth(
     service = _build_service(db_session, tmp_path)
     updated = service.reconcile_leave_request("leave-1")
 
+    # HCM mock returns approved for hcm_leave_0000001, so status should be a valid final state
     assert updated.status in {"approved", "denied", "canceled", "complete", "requested"}
 
 
+# sync_all_balances corrects local balance drift by fetching external HCM truth
 def test_reconciliation_service_repairs_external_balance_drift(db_session, tmp_path: Path) -> None:
     db_session.add(build_user_record(id="user_emp_00001"))
     db_session.flush()

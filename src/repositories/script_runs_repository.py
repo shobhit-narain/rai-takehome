@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
@@ -34,21 +34,21 @@ class ScriptRunsRepository:
     def mark_started(self, run_id: str) -> ScriptRunRecord:
         record = self._require(run_id)
         record.status = "running"
-        record.started_ts = datetime.now(timezone.utc)
+        record.started_ts = datetime.now(UTC)
         self.session.flush()
         return record
 
     def mark_completed(self, run_id: str) -> ScriptRunRecord:
         record = self._require(run_id)
         record.status = "completed"
-        record.finished_ts = datetime.now(timezone.utc)
+        record.finished_ts = datetime.now(UTC)
         self.session.flush()
         return record
 
     def mark_failed(self, run_id: str, error_message: str) -> ScriptRunRecord:
         record = self._require(run_id)
         record.status = "failed"
-        record.finished_ts = datetime.now(timezone.utc)
+        record.finished_ts = datetime.now(UTC)
         record.error_message = error_message
         self.session.flush()
         return record

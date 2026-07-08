@@ -1,3 +1,6 @@
+# Tests for ReconciliationService domain logic.
+# Validates leave request reconciliation with external HCM state and balance synchronization.
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -17,6 +20,7 @@ def _service(leave_requests_repo, hcm_service) -> ReconciliationService:
     )
 
 
+# Pending reconciliation record is repaired when HCM returns approved status
 def test_reconcile_leave_request_repairs_pending_record() -> None:
     record = MagicMock(id="leave-1", external_hcm_id="hcm-1", status="pending_reconciliation")
     leave_requests_repo = MagicMock()
@@ -36,6 +40,7 @@ def test_reconcile_leave_request_repairs_pending_record() -> None:
     leave_requests_repo.update.assert_called_once_with(record)
 
 
+# Reconciliation returns early if leave record has no external HCM ID
 def test_reconcile_leave_request_returns_early_without_external_id() -> None:
     record = MagicMock(id="leave-1", external_hcm_id=None)
     leave_requests_repo = MagicMock()
@@ -48,6 +53,7 @@ def test_reconcile_leave_request_returns_early_without_external_id() -> None:
     leave_requests_repo.update.assert_not_called()
 
 
+# Unknown external status is ignored and local record remains unchanged
 def test_reconcile_leave_request_ignores_unresolvable_status() -> None:
     record = MagicMock(id="leave-1", external_hcm_id="hcm-1", status="pending_reconciliation")
     leave_requests_repo = MagicMock()
@@ -63,6 +69,7 @@ def test_reconcile_leave_request_ignores_unresolvable_status() -> None:
     leave_requests_repo.update.assert_not_called()
 
 
+# sync_all_balances fetches external balances for all users and upserts locally
 def test_sync_all_balances_updates_local_state() -> None:
     user = MagicMock(id="emp-1")
     leave_requests_repo = MagicMock()

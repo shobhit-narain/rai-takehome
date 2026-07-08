@@ -70,6 +70,10 @@ class LeaveRequestsRepository:
             return stmt
         if "status" in filters:
             stmt = stmt.where(LeaveRequestRecord.status == filters["status"])
+        if "status_not_in" in filters:
+            stmt = stmt.where(LeaveRequestRecord.status.not_in(filters["status_not_in"]))
+        if "status_in" in filters:
+            stmt = stmt.where(LeaveRequestRecord.status.in_(filters["status_in"]))
         if "location_id" in filters:
             stmt = stmt.where(LeaveRequestRecord.location_id == filters["location_id"])
         return stmt

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from src.adapters.hcm.mapper import HcmMapper
@@ -52,7 +52,7 @@ class LeavesService:
     def request_leave(self, actor: LoggedInUser, command: LeaveCreateCommand) -> LeaveRequestRecord:
         self.policy_service.validate_leave_request(actor, actor.user_id, command)
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         record = LeaveRequestRecord(
             id=str(uuid.uuid4()),
             external_hcm_id=None,
@@ -116,7 +116,7 @@ class LeavesService:
         reporting_tree_ids = [
             user.id for user in self.users_service.get_reporting_tree(actor.user_id)
         ]
-        self.policy_service.validate_leave_update(actor, record, command.action, reporting_tree_ids)
+        self.policy_service.validate_leave_update(actor, record, command.action, reporting_tree_ids, command)
 
         current_status = LeaveStatus(record.status)
         next_status = self.state_machine.next_status(current_status, command.action)
@@ -126,7 +126,7 @@ class LeavesService:
 
         expected_version = record.version
         record.status = next_status.value
-        record.updated_ts = datetime.now(timezone.utc)
+        record.updated_ts = datetime.now(UTC)
         if next_status == LeaveStatus.APPROVED:
             record.approved_ts = record.updated_ts
         if next_status == LeaveStatus.COMPLETE:

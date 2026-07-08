@@ -15,6 +15,7 @@ class LeaveStateMachine:
         (LeaveStatus.REQUESTED, LeaveAction.REQUEST_CHANGE): LeaveStatus.REQUESTED,
         (LeaveStatus.APPROVED, LeaveAction.CANCEL): LeaveStatus.CANCELED,
         (LeaveStatus.APPROVED, LeaveAction.COMPLETE): LeaveStatus.COMPLETE,
+        (LeaveStatus.APPROVED, LeaveAction.DENY): LeaveStatus.DENIED,
     }
 
     _RECONCILIATION_RESOLUTIONS = {

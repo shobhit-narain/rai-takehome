@@ -1,9 +1,13 @@
+# Tests for UsersRepository integration with database.
+# Validates reporting tree traversal (including indirect reports) and direct reports retrieval.
+
 from __future__ import annotations
 
 from src.infra.db.factories import build_user_record
 from src.repositories.users_repository import UsersRepository
 
 
+# list_reporting_tree returns both direct and indirect reports recursively
 def test_users_repository_returns_reporting_tree(db_session) -> None:
     manager = build_user_record(id="mgr-1", role="manager")
     report1 = build_user_record(id="emp-1", role="employee", manager_id="mgr-1")
@@ -16,6 +20,7 @@ def test_users_repository_returns_reporting_tree(db_session) -> None:
     assert {user.id for user in tree} == {"emp-1", "emp-2"}
 
 
+# list_reports returns only direct reports (not indirect)
 def test_users_repository_returns_direct_reports(db_session) -> None:
     manager = build_user_record(id="mgr-1", role="manager")
     report1 = build_user_record(id="emp-1", role="employee", manager_id="mgr-1")

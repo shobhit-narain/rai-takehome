@@ -1,13 +1,17 @@
+# Tests for HcmConfigsRepository integration with database.
+# Validates active HCM provider configuration retrieval.
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.infra.db.models import HcmConfigRecord
 from src.repositories.hcm_configs_repository import HcmConfigsRepository
 
 
+# get_active_config returns the active configuration for a given provider
 def test_hcm_configs_repository_returns_active_provider_config(db_session) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db_session.add(
         HcmConfigRecord(
             id="cfg-1",

@@ -1,3 +1,6 @@
+# Tests for application exception classes.
+# Validates default error codes and message handling for all custom exception types.
+
 from __future__ import annotations
 
 from src.app.exceptions import (
@@ -11,12 +14,14 @@ from src.app.exceptions import (
 )
 
 
+# Base AppError uses default code and preserves message
 def test_app_error_default_code() -> None:
     error = AppError("boom")
     assert error.code == "app_error"
     assert error.message == "boom"
 
 
+# Specific exception subclasses have correct error codes
 def test_specific_error_codes() -> None:
     assert AuthRequiredError().code == "auth_required"
     assert AccessDeniedError().code == "access_denied"

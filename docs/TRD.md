@@ -5,42 +5,37 @@
 - Project: Time-Off Microservice
 - Primary stack: Python, FastAPI, SQLite
 - Supporting libraries: SQLAlchemy, Pydantic, httpx, APScheduler, pytest
-- Status: Draft
-- Intended deliverable format: Markdown source, PDF export for submission
 
 ## 2. Overview
 
-ReadyOn needs a backend service that allows employees to view leave balances and request time off while allowing managers to review and act on those requests. The external Human Capital Management system is the source of truth for employment data and leave balances, so the service must preserve local workflow usability without losing consistency with the HCM.
+ReadyOn provides a backend service that allows employees to view leave balances and request time off while allowing managers to review and act on those requests. The external Human Capital Management system remains the source of truth for employment data and leave balances, and the service preserves local workflow usability while maintaining consistency with the HCM.
 
-The core problem is balance integrity. An employee may request leave in ReadyOn while a separate system updates the HCM balance independently, for example due to work anniversary accruals or year-end refreshes. The service must support local request lifecycle management, real-time HCM interactions, batch balance synchronization, and defensive reconciliation when external validation is incomplete or delayed.
+The main technical challenge is balance integrity. Employees request leave in ReadyOn while external systems can independently update HCM balances through accruals, refreshes, or corrections. The service therefore combines local request lifecycle management, real-time HCM interactions, batch synchronization, and defensive reconciliation when upstream validation is delayed, incomplete, or ambiguous.
 
-## 3. Product Context
+## 3. Product Assumptions
 
-ReadyOn is the primary employee-facing interface for time-off requests. The HCM remains authoritative for balance values and other employment data. The service must support:
-
-- employee self-service leave workflows
-- manager review and approval workflows
-- real-time HCM validation and mutation calls
-- batch HCM balance ingestion
-- local defensive checks when HCM validation cannot be fully trusted
-- mock HCM endpoints for testing and simulation
+- ReadyOn is the primary employee-facing interface for time-off workflows.
+- The HCM is authoritative for employment data and balance values.
+- Employees, managers, and admins access the service through authenticated API calls.
+- Local persistence supports workflow continuity, auditability, and reconciliation.
+- Mock HCM endpoints simulate external behavior for development and testing.
 
 ## 4. Goals
 
-The service will:
+The service:
 
-- authenticate employee, manager, and admin users
-- expose leave-related REST endpoints
-- persist leave requests and local balance records in SQLite
-- synchronize with HCM through a canonical adapter layer
-- provide resilient HTTP communication for HCM calls
-- provide caching and rate-limit coordination
-- support scheduled reconciliation and backfill jobs
-- include a strong automated test suite for regression protection
+- authenticates employee, manager, and admin users
+- exposes leave-related REST endpoints
+- persists leave requests and local balance records in SQLite
+- synchronizes with HCM through a canonical adapter layer
+- provides resilient HTTP communication for HCM calls
+- provides caching and rate-limit coordination
+- supports scheduled reconciliation and backfill jobs
+- includes an automated test suite for regression protection
 
 ## 5. Non-Goals
 
-The initial implementation will not include:
+The service does not include:
 
 - production single sign-on integration
 - distributed message queues
@@ -54,7 +49,7 @@ The initial implementation will not include:
 
 ### Employee
 
-The employee wants to:
+An employee can:
 
 - view an accurate leave balance
 - request leave with immediate feedback
@@ -63,7 +58,7 @@ The employee wants to:
 
 ### Manager
 
-The manager wants to:
+A manager can:
 
 - review pending leave requests for managed employees
 - approve or deny requests with confidence that data is valid
@@ -71,7 +66,7 @@ The manager wants to:
 
 ### Admin
 
-The admin wants to:
+An admin can:
 
 - perform privileged review and correction actions
 - run reconciliation and maintenance scripts
@@ -81,20 +76,20 @@ The admin wants to:
 
 ### 7.1 Authentication and Authorization
 
-The system must support authenticated users with personas:
+The system supports authenticated users with these personas:
 
 - employee
 - manager
 - admin
 
-All protected endpoints must resolve a `LoggedInUser` object with at least:
+All protected endpoints resolve a `LoggedInUser` object with at least:
 
 - `user_id`
 - `role`
 - `manager_id`
 - `location_id`
 
-The authenticated user object must expose helper methods:
+The authenticated user object exposes helper methods:
 
 - `is_employee()`
 - `is_manager()`
@@ -105,27 +100,27 @@ Authorization rules:
 - employees may access only their own leave data
 - managers may act only on employees in their reporting tree
 - admins may access all records
-- all privileged actions must be auditable
+- all privileged actions are auditable
 
 ### 7.2 Leave Endpoints
 
-#### Employee endpoints
+Employee endpoints:
 
 - `GET /leaves/balance`
 - `GET /leaves/current`
 - `POST /leaves/request`
 - `POST /leaves/{leave_id}/update`
 
-#### Manager endpoints
+Manager endpoints:
 
 - `GET /leaves/requests`
 - `POST /leaves/{leave_id}/update`
 
 ### 7.3 Database
 
-The system must use SQLite for local persistence.
+The system uses SQLite for local persistence.
 
-Required logical tables:
+Logical tables:
 
 - `users`
 - `leave_requests`
@@ -134,29 +129,29 @@ Required logical tables:
 - `script_runs`
 - `audit_events`
 
-Balances must be maintained per employee per location.
+Balances are maintained per employee per location.
 
 ### 7.4 HCM Adapter Layer
 
-The system must provide canonical methods:
+The system provides canonical methods:
 
 - `get_balances(user_id, location_id=None)`
 - `batch_get_balances(request)`
 - `create_leave(user_id, leave_request)`
 - `update_leave(actor_user_id, update_request)`
 
-HCM-specific adapters must convert canonical requests into provider-specific formats.
+Provider-specific adapters convert canonical requests and responses into external formats.
 
 ### 7.5 HTTP Wrapper
 
-The system must provide an HTTP wrapper with methods:
+The system provides an HTTP wrapper with methods:
 
 - `get`
 - `post`
 - `put`
 - `delete`
 
-The wrapper must support:
+The wrapper supports:
 
 - error normalization
 - exponential backoff with jitter
@@ -165,9 +160,11 @@ The wrapper must support:
 - typed upstream exceptions
 - optional response caching for test or mock flows only
 
+**Note:** for a real production deployment the HTTP wrapper would be used for all connections, including internal DB and caching, with a Connection Pooling and Context Management layers built on-top of it. This project currently only 
+
 ### 7.6 Cache Layer
 
-The system must provide:
+The system provides:
 
 - `get_key(namespace, key)`
 - `set_key(namespace, key, value, ttl=None)`
@@ -176,22 +173,31 @@ The system must provide:
 - `acquire_ratelimit(provider, tokens=1)`
 - `update_ratelimit_from_headers(provider, headers)`
 
-The initial backend may be in-memory. The interface must allow later Redis implementation.
+The initial backend is in-memory, and the interface allows a later Redis-backed implementation.
 
 ### 7.7 Scheduling and Scripts
 
-The system must provide a scheduling and scripts module with methods:
+The service includes a scheduling and scripts module that supports:
 
 - `run_script(name, params)`
 - `schedule_script(name, cron_expression, params)`
 - `get_status(run_id)`
 - `cancel_run(run_id)`
 
-The initial scheduler implementation may use APScheduler. The scheduling API must be written so other runners can be added later.
+Scheduling exists to keep local workflow data aligned with the HCM even when external changes occur outside a direct user request. The service uses scripts for batch balance synchronization, recent leave reconciliation, historical balance backfill, and repair of records that remain in reconciliation-required states.
+
+Scripts run in two modes:
+
+- regular scheduled execution for recurring synchronization and repair tasks
+- ad hoc execution for operator-driven support, diagnostics, or corrective maintenance
+
+Regular schedules are suitable for jobs such as periodic `sync_all_balances` and `reconcile_recent_leaves`. Ad hoc runs are suitable for targeted operations such as `repair_pending_reconciliation` or one-time `backfill_balances` after seed refreshes, support events, or external corrections.
+
+The current scheduler uses APScheduler and persists script run status in `script_runs`. Scheduled syncs are the main automatic trigger path. Other scripts run when explicitly requested through the API or administrative workflows. For the sake of simplicity, the project does not create or mock any scheduled script runs.
 
 ### 7.8 Mock HCM
 
-The service must include mock HCM endpoints with stateful logic to simulate:
+The service includes mock HCM endpoints with stateful logic to simulate:
 
 - successful balance lookup
 - successful leave creation
@@ -203,32 +209,32 @@ The service must include mock HCM endpoints with stateful logic to simulate:
 
 ### 7.9 Testing
 
-The service must include:
+The service includes:
 
 - unit tests
 - integration tests
 - API tests
 - end-to-end tests
 
-The test suite must validate behavior around synchronization, authorization, state transitions, retries, rate-limits, and reconciliation.
+The test suite validates synchronization, authorization, state transitions, retries, rate-limits, and reconciliation behavior.
 
 ## 8. Non-Functional Requirements
 
-### 8.1 Correctness
+### Correctness
 
-Correctness is the highest priority. The service must not silently accept inconsistent state between local data and HCM. If the final truth is uncertain, the system must mark the record for reconciliation.
+Correctness is the highest priority. The service does not silently accept inconsistent state between local data and HCM. If final truth is uncertain, the system marks the record for reconciliation.
 
-### 8.2 Testability
+### Testability
 
-All infrastructure dependencies must be injectable or replaceable in tests. Service boundaries must remain narrow and explicit.
+Infrastructure dependencies are injectable or replaceable in tests. Service boundaries remain narrow and explicit.
 
-### 8.3 Maintainability
+### Maintainability
 
-The codebase must be structured into modules with one primary responsibility each. Domain logic must not be duplicated in routes or repositories.
+The codebase is structured into modules with one primary responsibility each. Domain logic does not duplicate route or repository behavior.
 
-### 8.4 Observability
+### Observability
 
-The system must log:
+The system logs:
 
 - request identifiers
 - user identifiers
@@ -238,11 +244,11 @@ The system must log:
 - script run identifiers
 - transition and error outcomes
 
-Sensitive actions must produce audit events.
+Sensitive actions produce audit events.
 
-## 9. Recommended Architecture
+## 9. Architecture
 
-The service will be implemented as a modular monolith.
+The service is implemented as a modular monolith.
 
 Top-level architectural areas:
 
@@ -267,7 +273,7 @@ Responsible for:
 - dependency wiring
 - exception mapping
 
-The API layer must remain thin and delegate business behavior to services.
+The API layer remains thin and delegates business behavior to services.
 
 ### 9.2 Auth Layer
 
@@ -277,7 +283,7 @@ Responsible for:
 - role-aware dependencies
 - helper methods for current-user checks
 
-The auth layer must not contain leave business rules.
+The auth layer does not contain leave business rules.
 
 ### 9.3 Domain Layer
 
@@ -288,7 +294,7 @@ Responsible for:
 - business policy validation
 - canonical domain models
 
-The domain layer must be pure and testable without HTTP or database dependencies.
+The domain layer is pure and testable without HTTP or database dependencies.
 
 ### 9.4 Service Layer
 
@@ -348,178 +354,260 @@ Responsible for:
 
 ## 10. Data Model
 
-### 10.1 users
+### users
 
-Fields:
+```sql
+TABLE users (
+    id              TEXT PRIMARY KEY,
+    email           TEXT NOT NULL,
+    name            TEXT NOT NULL,
+    role            TEXT NOT NULL,
+    manager_id      TEXT NULL REFERENCES users(id),
+    location_id     TEXT NOT NULL,
+    is_active       BOOLEAN NOT NULL,
+    created_ts      DATETIME NOT NULL,
+    updated_ts      DATETIME NOT NULL
+);
 
-- `id`
-- `email`
-- `name`
-- `role`
-- `manager_id`
-- `location_id`
-- `is_active`
-- `created_ts`
-- `updated_ts`
+INDEX idx_users_role (role);
+INDEX idx_users_manager_id (manager_id);
+INDEX idx_users_location_id (location_id);
+```
 
-### 10.2 leave_requests
+### leave_requests
 
-Fields:
+```sql
+TABLE leave_requests (
+    id                TEXT PRIMARY KEY,
+    external_hcm_id   TEXT NULL,
+    requestor_id      TEXT NOT NULL REFERENCES users(id),
+    approver_id       TEXT NULL REFERENCES users(id),
+    location_id       TEXT NOT NULL,
+    leave_type        TEXT NOT NULL,
+    leave_duration    FLOAT NOT NULL,
+    leave_start       DATE NOT NULL,
+    leave_end         DATE NOT NULL,
+    status            TEXT NOT NULL,
+    failure_reason    TEXT NULL,
+    version           INTEGER NOT NULL,
+    created_ts        DATETIME NOT NULL,
+    updated_ts        DATETIME NOT NULL,
+    approved_ts       DATETIME NULL,
+    complete_ts       DATETIME NULL,
+    last_synced_ts    DATETIME NULL
+);
 
-- `id`
-- `external_hcm_id`
-- `requestor_id`
-- `approver_id`
-- `location_id`
-- `leave_type`
-- `leave_duration`
-- `leave_start`
-- `leave_end`
-- `status`
-- `failure_reason`
-- `version`
-- `created_ts`
-- `updated_ts`
-- `approved_ts`
-- `complete_ts`
-- `last_synced_ts`
+INDEX idx_leave_requests_requestor_id (requestor_id);
+INDEX idx_leave_requests_approver_id (approver_id);
+INDEX idx_leave_requests_status (status);
+INDEX idx_leave_requests_external_hcm_id (external_hcm_id);
+INDEX idx_leave_requests_location_id (location_id);
+```
 
-### 10.3 leave_balances
+### leave_balances
 
-Fields:
+```sql
+TABLE leave_balances (
+    id                  TEXT PRIMARY KEY,
+    user_id             TEXT NOT NULL REFERENCES users(id),
+    location_id         TEXT NOT NULL,
+    leave_type          TEXT NOT NULL,
+    num_available       FLOAT NOT NULL,
+    num_ytd_taken       FLOAT NOT NULL,
+    num_limit           FLOAT NOT NULL,
+    external_updated_ts DATETIME NULL,
+    updated_ts          DATETIME NOT NULL
+);
 
-- `id`
-- `user_id`
-- `location_id`
-- `leave_type`
-- `num_available`
-- `num_ytd_taken`
-- `num_limit`
-- `external_updated_ts`
-- `updated_ts`
+UNIQUE INDEX uq_leave_balances_user_location_type (
+    user_id,
+    location_id,
+    leave_type
+);
 
-Uniqueness rule:
+INDEX idx_leave_balances_user_id (user_id);
+INDEX idx_leave_balances_location_id (location_id);
+```
 
-- unique on `user_id`, `location_id`, `leave_type`
+### hcm_configs
 
-### 10.4 hcm_configs
+```sql
+TABLE hcm_configs (
+    id                  TEXT PRIMARY KEY,
+    provider_name       TEXT NOT NULL,
+    base_url            TEXT NOT NULL,
+    auth_type           TEXT NOT NULL,
+    token_ref           TEXT NOT NULL,
+    rate_limit_default  INTEGER NOT NULL,
+    is_active           BOOLEAN NOT NULL,
+    created_ts          DATETIME NOT NULL,
+    updated_ts          DATETIME NOT NULL
+);
 
-Fields:
+INDEX idx_hcm_configs_provider_name (provider_name);
+INDEX idx_hcm_configs_is_active (is_active);
+```
 
-- `id`
-- `provider_name`
-- `base_url`
-- `auth_type`
-- `token_ref`
-- `rate_limit_default`
-- `is_active`
-- `created_ts`
-- `updated_ts`
+### script_runs
 
-### 10.5 script_runs
+```sql
+TABLE script_runs (
+    id                   TEXT PRIMARY KEY,
+    script_name          TEXT NOT NULL,
+    status               TEXT NOT NULL,
+    schedule_expression  TEXT NULL,
+    params_json          TEXT NOT NULL,
+    started_ts           DATETIME NULL,
+    finished_ts          DATETIME NULL,
+    cancel_requested     BOOLEAN NOT NULL,
+    error_message        TEXT NULL
+);
 
-Fields:
+INDEX idx_script_runs_script_name (script_name);
+INDEX idx_script_runs_status (status);
+```
 
-- `id`
-- `script_name`
-- `status`
-- `schedule_expression`
-- `params_json`
-- `started_ts`
-- `finished_ts`
-- `cancel_requested`
-- `error_message`
+### audit_events
 
-### 10.6 audit_events
+```sql
+TABLE audit_events (
+    id             TEXT PRIMARY KEY,
+    entity_type    TEXT NOT NULL,
+    entity_id      TEXT NOT NULL,
+    action         TEXT NOT NULL,
+    actor_user_id  TEXT NOT NULL,
+    payload_json   TEXT NOT NULL,
+    created_ts     DATETIME NOT NULL
+);
 
-Fields:
-
-- `id`
-- `entity_type`
-- `entity_id`
-- `action`
-- `actor_user_id`
-- `payload_json`
-- `created_ts`
+INDEX idx_audit_events_entity_type_entity_id (entity_type, entity_id);
+INDEX idx_audit_events_actor_user_id (actor_user_id);
+INDEX idx_audit_events_action (action);
+```
 
 ## 11. Leave Lifecycle and State Machine
 
-Leave status values:
+### Leave status enums
 
-- `created`
-- `requested`
-- `approved`
-- `denied`
-- `complete`
-- `canceled`
-- `pending_reconciliation`
+```text
+created
+requested
+approved
+denied
+complete
+canceled
+pending_reconciliation
+```
 
-Allowed transitions:
+### Allowed transitions
 
-- `created -> requested`
-- `requested -> approved`
-- `requested -> denied`
-- `requested -> canceled`
-- `approved -> canceled` when policy permits
-- `approved -> complete`
-- `any -> pending_reconciliation` when external confirmation is ambiguous
-- `pending_reconciliation -> approved`
-- `pending_reconciliation -> denied`
-- `pending_reconciliation -> canceled`
-- `pending_reconciliation -> complete`
+```text
+created -> requested
+requested -> approved
+requested -> denied
+requested -> canceled
+approved -> canceled
+approved -> complete
+any -> pending_reconciliation
+pending_reconciliation -> approved
+pending_reconciliation -> denied
+pending_reconciliation -> canceled
+pending_reconciliation -> complete
+```
 
-The state machine must be implemented explicitly and tested directly.
+```mermaid
+stateDiagram-v2
+    direction LR
 
-## 12. API Behavior
+    [*] --> Created: Draft request
+    Created --> Requested: Submit
+    Requested --> Approved: Manager/Admin approve
+    Requested --> Denied: Manager/Admin deny
+    Requested --> Cancelled: Employee cancel
+    Approved --> Cancelled: Cancel approved leave
+    Approved --> Reconciled: External HCM confirmed
+    Requested --> PendingReconciliation: Ambiguous external state
+    Approved --> PendingReconciliation: Drift detected
+    PendingReconciliation --> Reconciled: Reconciliation succeeds
+    PendingReconciliation --> Denied: External denial confirmed
+    PendingReconciliation --> Cancelled: External cancellation confirmed
 
-### 12.1 GET /leaves/balance
+    Denied --> [*]
+    Cancelled --> [*]
+    Reconciled --> [*]
 
-Returns balances for the authenticated user. Results must be scoped by the user and location context.
+    note right of Requested
+      Awaiting manager or admin action
+      and eligible for sync checks
+    end note
 
-### 12.2 GET /leaves/current
+    note right of PendingReconciliation
+      Used when external HCM responses are
+      delayed, inconsistent, or ambiguous
+    end note
+```
+
+The state machine is implemented explicitly and covered by direct tests.
+
+## 12. API Endpoints
+
+```text
+GET /leaves/balance
+```
+
+Returns balances for the authenticated user. Results are scoped by user and location context.
+
+```text
+GET /leaves/current
+```
 
 Returns current and recent leave requests for the authenticated user.
 
-### 12.3 POST /leaves/request
+```text
+POST /leaves/request
+```
 
-Creates a leave request.
+Creates a leave request. The request is validated for ownership, leave type, date range, duration, and balance/HCM constraints before the local record is persisted and audited.
 
-Expected behavior:
+```text
+POST /leaves/{leave_id}/update
+```
 
-1. validate request shape
-2. validate ownership and supported leave type
-3. validate date range and duration
-4. consult balance and HCM adapter
-5. persist local record
-6. emit audit event
-7. return canonical result
+Applies an employee, manager, or admin action depending on role and target state. Employee actions include cancel or modify behavior where policy allows it. Manager actions include approve, deny, or request-change-style workflow transitions. Admin actions support overrides, correction, and repair flows.
 
-### 12.4 POST /leaves/{leave_id}/update
-
-Allows employee, manager, or admin action depending on role and target state.
-
-Employee actions may include:
-
-- cancel
-- modify
-
-Manager actions may include:
-
-- approve
-- deny
-- request_change
-
-Admin actions may include:
-
-- override actions for support or repair
-
-### 12.5 GET /leaves/requests
+```text
+GET /leaves/requests
+```
 
 Returns a manager-scoped or admin-scoped list of leave requests.
 
+```text
+POST /scripts/{name}/run
+```
+
+Runs a registered script immediately with provided parameters and persists a `script_runs` record for status tracking.
+
+```text
+POST /scripts/{name}/schedule
+```
+
+Schedules a registered script using a cron expression for recurring execution.
+
+```text
+GET /scripts/runs/{run_id}
+```
+
+Returns the current persisted status of a script run.
+
+```text
+POST /scripts/runs/{run_id}/cancel
+```
+
+Persists cancellation intent for a running or pending script.
+
 ## 13. Canonical HCM Interface
 
-The canonical HCM interface will be defined as a Python protocol.
+The canonical HCM interface is defined as a Python protocol.
 
 Required methods:
 
@@ -528,11 +616,11 @@ Required methods:
 - `create_leave`
 - `update_leave`
 
-This interface isolates the domain and service layers from provider-specific details.
+This interface isolates domain and service layers from provider-specific details.
 
 ## 14. Error Handling
 
-The API must return a stable JSON error envelope:
+The API returns a stable JSON error envelope:
 
 ```json
 {
@@ -545,34 +633,38 @@ The API must return a stable JSON error envelope:
 
 Representative error codes:
 
-- `AUTH_REQUIRED`
-- `ACCESS_DENIED`
-- `VALIDATION_ERROR`
-- `INVALID_STATE_TRANSITION`
-- `INSUFFICIENT_BALANCE`
-- `UPSTREAM_TIMEOUT`
-- `UPSTREAM_RATE_LIMITED`
-- `UPSTREAM_VALIDATION_ERROR`
-- `RECONCILIATION_REQUIRED`
+```text
+AUTH_REQUIRED
+ACCESS_DENIED
+VALIDATION_ERROR
+INVALID_STATE_TRANSITION
+INSUFFICIENT_BALANCE
+UPSTREAM_TIMEOUT
+UPSTREAM_RATE_LIMITED
+UPSTREAM_VALIDATION_ERROR
+RECONCILIATION_REQUIRED
+```
 
 ## 15. Logging and Audit
 
-Each request should carry a request identifier.
+Each request carries a request identifier.
 
-Structured logs should include, where applicable:
+Structured logs include, where applicable:
 
-- `request_id`
-- `user_id`
-- `role`
-- `leave_request_id`
-- `provider`
-- `external_request_id`
-- `script_run_id`
-- `action`
-- `result`
-- `latency_ms`
+```text
+request_id
+user_id
+role
+leave_request_id
+provider
+external_request_id
+script_run_id
+action
+result
+latency_ms
+```
 
-Audit events must be written for:
+Audit events are written for:
 
 - leave creation
 - approval
@@ -583,7 +675,7 @@ Audit events must be written for:
 
 ## 16. Seeded Data
 
-The initial dataset must include:
+The seeded dataset includes:
 
 - about 5000 employees
 - one or two leave types
@@ -593,7 +685,7 @@ The initial dataset must include:
 - seeded leave requests across several statuses
 - seeded HCM config records
 
-The mock HCM data must be maintained separately so local and external states can diverge during tests.
+Mock HCM data is maintained separately so local and external states can diverge during tests.
 
 ## 17. Scheduling and Scripts
 
@@ -604,47 +696,56 @@ Built-in scripts:
 - `backfill_balances`
 - `repair_pending_reconciliation`
 
-Every script run must persist a `script_runs` record and expose current status.
+These scripts exist to keep local balances and leave statuses aligned with the HCM even when external changes happen outside the request path. They also support operational recovery after delayed upstream updates, failed validations, or manual corrections.
+
+Scheduling falls into two categories:
+
+- regular scheduled runs for recurring synchronization and reconciliation
+- ad hoc runs for investigation, support, backfill, and repair
+
+Regular scheduled runs are appropriate for balance synchronization and recent-leave reconciliation. Ad hoc runs are appropriate for targeted repair of reconciliation-required records, selective backfills, or support-driven maintenance after external incidents.
+
+Each script run persists a `script_runs` record, including run status, scheduling metadata, parameters, timestamps, and cancellation intent. Automatic triggers mainly consist of recurring scheduled sync jobs. Other maintenance and repair actions are initiated explicitly through script endpoints or operator workflows.
 
 ## 18. Acceptance Criteria
 
-### 18.1 Authentication and Authorization
+### Authentication and Authorization
 
 - unauthenticated requests to protected routes return 401
 - employee users can act only on their own leave records
 - manager users can act only on managed employees
 - admin users can access all leave and script routes
 
-### 18.2 Leave Lifecycle
+### Leave Lifecycle
 
 - valid leave request persists and calls the HCM adapter
 - invalid leave type or date range fails validation
 - invalid state transitions are rejected
 - uncertain HCM outcomes move the leave request to `pending_reconciliation`
 
-### 18.3 Balances and Sync
+### Balances and Sync
 
 - balances are unique per employee, location, and leave type
 - real-time balance lookup is supported
 - batch balance synchronization is supported
-- reconciliation can repair local state after external balance changes
+- reconciliation repairs local state after external balance changes
 
-### 18.4 Adapter and HTTP Wrapper
+### Adapter and HTTP Wrapper
 
 - canonical adapter hides provider-specific payloads
 - retry and backoff behavior is covered by tests
 - rate-limit headers are parsed and persisted through cache
-- response caching is disabled by default and only used for tests or mock flows
+- response caching is disabled by default and used only for tests or mock flows
 
-### 18.5 Scheduling
+### Scheduling
 
 - scripts can run ad hoc
 - scripts can be scheduled
 - script status can be queried
 - cancellation requests are persisted
-- reconciliation jobs can run end-to-end in tests
+- reconciliation jobs run end-to-end in tests
 
-### 18.6 Testing
+### Testing
 
 - unit, integration, API, and end-to-end tests are present
 - mock HCM endpoints support scenario simulation
@@ -652,13 +753,9 @@ Every script run must persist a `script_runs` record and expose current status.
 
 ## 19. Alternatives Considered
 
-### Flask
+### Flask and Django
 
-Flask aligns well with decorator-based auth patterns, but FastAPI provides stronger request validation, dependency injection, and test override support.
-
-### Django
-
-Django provides a powerful framework, but it is heavier than necessary for this service and adds surface area unrelated to the sync and reconciliation problem.
+Flask and Django were both considered as Python web framework options. Flask aligns well with lightweight decorator-based patterns, while Django provides a more batteries-included platform. FastAPI is the better fit for this service because it provides stronger request validation, dependency injection, typed schemas, and test override support without adding framework surface area that is unrelated to the sync and reconciliation problem.
 
 ### Event-Driven Queue-First Architecture
 
@@ -668,38 +765,20 @@ A queue-first design may improve scalability but adds complexity and weakens imm
 
 ### Local and HCM state drift
 
-Mitigation:
-
-- reconciliation status
-- scheduled sync jobs
-- audit events
-- explicit sync timestamps
+This risk appears when local records and the external HCM no longer agree because of delayed updates, external accruals, or partial failures. Mitigation includes reconciliation status, scheduled sync jobs, audit events, and explicit sync timestamps.
 
 ### Race conditions between approval and cancellation
 
-Mitigation:
-
-- optimistic concurrency with version fields
-- deterministic update rules
-- conflict-aware tests
+This risk appears when concurrent actions attempt to update the same leave request in conflicting ways. Mitigation includes optimistic concurrency with version fields, deterministic update rules, and conflict-aware tests.
 
 ### Manager hierarchy bugs
 
-Mitigation:
-
-- isolated hierarchy repository methods
-- direct unit and integration tests
+This risk appears when authorization logic incorrectly determines who can act on whose records. Mitigation includes isolated hierarchy repository methods and direct unit and integration tests.
 
 ### Retry or rate-limit logic misbehavior
 
-Mitigation:
-
-- dedicated HTTP wrapper tests
-- deterministic fake headers and clocks
+This risk appears when retry loops, backoff timing, or rate-limit parsing produce hidden failures or overload. Mitigation includes dedicated HTTP wrapper tests plus deterministic fake headers and clocks.
 
 ### Over-mocking
 
-Mitigation:
-
-- real SQLite integration tests
-- end-to-end flows using mock HCM routes
+This risk appears when tests validate mocked behavior but fail to represent real persistence and orchestration behavior. Mitigation includes real SQLite integration tests and end-to-end flows using mock HCM routes.

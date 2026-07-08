@@ -1,3 +1,7 @@
+# Tests for end-to-end employee cancel flow.
+# Validates complete workflow: employee creates cancelable request, cancels it,
+# verifies local and external state.
+
 from __future__ import annotations
 
 from src.infra.db.models import UserRecord
@@ -5,6 +9,7 @@ from tests.helpers.auth import make_auth_header
 from tests.helpers.fixtures import build_leave_create_payload, build_leave_update_payload
 
 
+# Full employee cancel flow - employee requests, then cancels, status updated to canceled
 def test_employee_cancel_flow(test_client, employee_user: UserRecord) -> None:
     created = test_client.post(
         "/api/v1/leaves/request",

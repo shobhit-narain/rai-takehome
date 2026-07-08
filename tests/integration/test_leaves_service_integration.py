@@ -1,6 +1,9 @@
+# Tests for LeavesService integration with database and external HCM adapter.
+# Validates leave request persistence with audit events, manager approval flow, and version conflict detection.
+
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -37,6 +40,7 @@ def _build_service(db_session, tmp_path: Path) -> LeavesService:
     )
 
 
+# Employee leave request persists local record and creates audit event
 def test_leaves_service_persists_request_and_audit_event(db_session, tmp_path: Path) -> None:
     db_session.add(build_user_record(id="user_emp_00001", role="employee"))
     db_session.flush()
@@ -60,6 +64,7 @@ def test_leaves_service_persists_request_and_audit_event(db_session, tmp_path: P
     assert len(events) == 1
 
 
+# Manager approval updates leave status to approved and persists external HCM record
 def test_leaves_service_approves_valid_request(db_session, tmp_path: Path) -> None:
     db_session.add(build_user_record(id="user_mgr_0001", role="manager"))
     db_session.add(
@@ -89,6 +94,7 @@ def test_leaves_service_approves_valid_request(db_session, tmp_path: Path) -> No
     assert updated.status == "approved"
 
 
+# Version conflict detection prevents concurrent modification race conditions
 def test_leaves_service_detects_version_conflict(db_session, tmp_path: Path) -> None:
     db_session.add(build_user_record(id="user_emp_00001", role="employee"))
     db_session.flush()

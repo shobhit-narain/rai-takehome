@@ -57,6 +57,7 @@ class LeaveUpdateRequest(BaseModel):
     leave_start: date | None = None
     leave_end: date | None = None
     notes: str | None = None
+    mitigating_circumstances: str | None = None
 
 
 class LeaveListResponse(BaseModel):

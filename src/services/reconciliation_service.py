@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from src.adapters.hcm.mapper import HcmMapper
 from src.adapters.hcm.port import HcmServicePort
@@ -45,7 +45,7 @@ class ReconciliationService:
         if target_status is not None and self.state_machine.can_resolve_reconciliation(target_status):
             record.status = self.state_machine.resolve_reconciliation(target_status).value
             record.failure_reason = result.failure_reason
-            record.updated_ts = datetime.now(timezone.utc)
+            record.updated_ts = datetime.now(UTC)
             record.last_synced_ts = record.updated_ts
             self.leave_requests_repository.update(record)
             self.audit_service.record_reconciliation("system", record.id, {"status": record.status})
@@ -74,7 +74,7 @@ class ReconciliationService:
                         if raw_balance.get("external_updated_ts")
                         else None
                     ),
-                    updated_ts=datetime.now(timezone.utc),
+                    updated_ts=datetime.now(UTC),
                 )
                 updated.append(self.leave_balances_repository.upsert(balance))
         return updated

@@ -24,7 +24,20 @@ dist/
 # Environment variables and secrets
 .env
 .flaskenv
+
+# Seeded data files and database
+local.db
+seed_data/*.csv
+seed_data/*.json
+
+# Coverage artifacts
+.coverage
 coverage.xml
 
-local.db
+# Other files
 CLAUDE.md
+.aider*
+docs/BLUEPRINT.md
+docs/IMPLEMENTATION_PLAN.md
+docs/SETUP.md
+next-steps

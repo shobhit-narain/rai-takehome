@@ -1,3 +1,7 @@
+# Tests for end-to-end manager approval flow.
+# Validates complete workflow: employee submits request, manager lists queue, approves request,
+# verifies local status, approver assignment, and external HCM update.
+
 from __future__ import annotations
 
 from src.infra.db.models import UserRecord
@@ -5,6 +9,7 @@ from tests.helpers.auth import make_auth_header
 from tests.helpers.fixtures import build_leave_create_payload, build_leave_update_payload
 
 
+# Full manager approval flow - employee requests, manager approves, status updated locally and externally
 def test_manager_approval_flow(
     test_client, employee_user: UserRecord, manager_user: UserRecord
 ) -> None:

@@ -1,3 +1,6 @@
+# Tests for HttpClient HTTP method coverage (PUT, DELETE).
+# Validates that all HTTP methods are correctly passed through to the transport.
+
 from __future__ import annotations
 
 import httpx
@@ -13,6 +16,7 @@ def _client(handler) -> HttpClient:
     )
 
 
+# PUT and DELETE methods correctly pass HTTP method to handler
 def test_http_client_put_and_delete() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"method": request.method})

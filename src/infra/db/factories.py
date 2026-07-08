@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from src.infra.db.models import LeaveBalanceRecord, LeaveRequestRecord, UserRecord
 
 
 def _now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def build_user_record(**overrides: object) -> UserRecord:

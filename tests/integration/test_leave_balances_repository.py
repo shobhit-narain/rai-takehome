@@ -1,6 +1,9 @@
+# Tests for LeaveBalancesRepository integration with database.
+# Validates bulk upsert behavior and unique constraint enforcement on user-location-leave_type.
+
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -10,6 +13,7 @@ from src.infra.db.models import LeaveBalanceRecord
 from src.repositories.leave_balances_repository import LeaveBalancesRepository
 
 
+# bulk_upsert updates existing balance row when unique key matches
 def test_leave_balances_repository_bulk_upsert_updates_existing_rows(db_session) -> None:
     user = build_user_record(id="emp-1")
     db_session.add(user)
@@ -29,12 +33,13 @@ def test_leave_balances_repository_bulk_upsert_updates_existing_rows(db_session)
     assert rows[0].num_available == 7.0
 
 
+# Unique constraint on (user_id, location_id, leave_type) prevents duplicate rows
 def test_leave_balances_repository_enforces_unique_scope(db_session) -> None:
     user = build_user_record(id="emp-1")
     db_session.add(user)
     db_session.flush()
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     db_session.add(
         LeaveBalanceRecord(
             id="bal-1",

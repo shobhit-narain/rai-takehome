@@ -1,3 +1,6 @@
+# Tests for end-to-end employee leave request with insufficient balance.
+# Validates that requesting leave exceeding available balance returns proper error.
+
 from __future__ import annotations
 
 from src.infra.db.models import UserRecord
@@ -5,6 +8,7 @@ from tests.helpers.auth import make_auth_header
 from tests.helpers.fixtures import build_leave_create_payload
 
 
+# Employee leave request exceeding balance returns 409 with INSUFFICIENT_BALANCE code
 def test_employee_request_insufficient_balance(test_client, employee_user: UserRecord) -> None:
     response = test_client.post(
         "/api/v1/leaves/request",

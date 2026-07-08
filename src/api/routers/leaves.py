@@ -48,13 +48,28 @@ def request_leave(
     return LeaveRequestResponse.model_validate(record)
 
 
+from src.domain.enums import LeaveStatus
+
+# Non-terminal leave statuses that should appear in manager queue by default
+QUEUE_NON_TERMINAL_STATUSES = {
+    LeaveStatus.CREATED.value,
+    LeaveStatus.REQUESTED.value,
+    LeaveStatus.PENDING_RECONCILIATION.value,
+}
+
 @router.get("/manager/queue", response_model=LeaveListResponse)
 def get_leave_requests(
     status: list[str] | None = Query(default=None),
+    include_all: bool = Query(default=False, description="Include all statuses (including approved, denied, canceled, complete)"),
     actor: LoggedInUser = Depends(require_manager_or_admin),
     leaves_service: LeavesService = Depends(get_leaves_service),
 ) -> LeaveListResponse:
     filters = {"status": status[0]} if status else None
+    
+    # If not including all statuses and no specific status filter, show only non-terminal statuses
+    if not include_all and not status:
+        filters = {"status_in": list(QUEUE_NON_TERMINAL_STATUSES)}
+    
     records = leaves_service.get_manager_leave_requests(actor, filters)
     return LeaveListResponse(items=[LeaveRequestResponse.model_validate(r) for r in records])
 

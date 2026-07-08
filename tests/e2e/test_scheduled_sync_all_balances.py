@@ -1,10 +1,15 @@
+# Tests for end-to-end scheduled balance sync script.
+# Validates script scheduling, execution, run recording, and balance updates.
+
 from __future__ import annotations
 
 from src.infra.db.models import UserRecord
 from tests.helpers.auth import make_auth_header
 
 
+# Admin schedules balance sync script, triggers execution, verifies run record and balance updates
 def test_scheduled_sync_all_balances(test_client, employee_user: UserRecord, admin_user: UserRecord) -> None:
+    # Schedule the sync_all_balances script with cron expression
     scheduled = test_client.post(
         "/api/v1/scripts/sync_all_balances/schedule",
         headers=make_auth_header(admin_user.id),
@@ -13,6 +18,7 @@ def test_scheduled_sync_all_balances(test_client, employee_user: UserRecord, adm
     assert scheduled.status_code == 200
     assert scheduled.json()["schedule_expression"] == "0 * * * *"
 
+    # Manually trigger script execution
     run = test_client.post(
         "/api/v1/scripts/sync_all_balances/run",
         headers=make_auth_header(admin_user.id),
@@ -21,6 +27,7 @@ def test_scheduled_sync_all_balances(test_client, employee_user: UserRecord, adm
     assert run.status_code == 200
     assert run.json()["status"] == "completed"
 
+    # Verify employee balances were updated
     balances = test_client.get(
         "/api/v1/leaves/balance", headers=make_auth_header(employee_user.id)
     )

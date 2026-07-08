@@ -1,4 +1,4 @@
-# Time-Off Microservice API Specification
+# API Specification
 
 ## 1. Document Scope
 

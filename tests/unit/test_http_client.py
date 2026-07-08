@@ -1,3 +1,7 @@
+# Tests for HttpClient infrastructure.
+# Validates successful responses, retry logic for transient failures, non-retry on validation errors,
+# and typed error handling for timeouts.
+
 from __future__ import annotations
 
 import httpx
@@ -15,6 +19,7 @@ def _client_with_transport(transport: httpx.MockTransport, max_attempts: int = 3
     )
 
 
+# Successful GET request returns parsed JSON response
 def test_http_client_returns_successful_response() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"ok": True})
@@ -25,6 +30,7 @@ def test_http_client_returns_successful_response() -> None:
     assert response.json() == {"ok": True}
 
 
+# Transient 500 error triggers retry and eventually succeeds
 def test_http_client_retries_transient_failure() -> None:
     calls = {"count": 0}
 
@@ -40,6 +46,7 @@ def test_http_client_retries_transient_failure() -> None:
     assert calls["count"] == 2
 
 
+# 422 validation error is not retried and raises typed error
 def test_http_client_does_not_retry_validation_error() -> None:
     calls = {"count": 0}
 
@@ -53,6 +60,7 @@ def test_http_client_does_not_retry_validation_error() -> None:
     assert calls["count"] == 1
 
 
+# Timeout exception raises typed UpstreamTimeoutError
 def test_http_client_timeout_raises_typed_error() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         raise httpx.TimeoutException("timed out", request=request)
