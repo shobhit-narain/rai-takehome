@@ -21,7 +21,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
       - name: Run ruff (tests, scripts - allow long lines)
-        run: ruff check --ignore=E501 tests scripts
+        run: ruff check --ignore=E501 tests seed_data/scripts
 
   typecheck:
     name: Typecheck (mypy)
